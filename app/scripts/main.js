@@ -86,4 +86,5 @@ function checkout() {
   } else {
     moveToPosition();
   }
+  changeStatus(currentLayout + 1);
 }
