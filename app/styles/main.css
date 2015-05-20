@@ -160,22 +160,7 @@ body {
   content: '>';
 }
 
-@keyframes mymove
-{
-  0%   {transform: rotate(0deg);}
-  10%  {transform: rotate(30deg);}
-  20%  {transform: rotate(0deg);}
-  30%  {transform: rotate(-30deg);}
-  40%  {transform: rotate(0deg);}
-  47%  {transform: rotate(20deg);}
-  54%  {transform: rotate(0deg);}
-  58%  {transform: rotate(-10deg);}
-  62%  {transform: rotate(0deg);}
-  100% {transform: rotate(0deg);}
-}
-
 .logo {
-  /*animation: mymove 3s linear infinite;*/
   width: 130px;
   position: absolute;
   right: 30px;
@@ -419,4 +404,8 @@ body {
 
 .card-over {
   animation: over-frames 1s linear;
+}
+
+.hide {
+  visibility: hidden;
 }

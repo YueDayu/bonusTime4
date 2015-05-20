@@ -10,7 +10,7 @@ var reOrder = [];
 var randomNum = [0, 0, 0];
 var mainNum;
 var partNum;
-var currentLayout = 0;
+var currentLayout = 1;
 var gap = 150;
 
 var word = ['安可', 'ENCORE'];
@@ -23,10 +23,19 @@ var context;
 
 var FPS = 60;
 
+var maxHundredNum = 8;
+
+var colors = [['#ffffff', '#f7d838'],
+            ['#f7d838', '#fee5d1'],
+            ['#9dcdb5', '#fee5d1'],
+            ['#eb484f', '#fee5d1']];
+
 /*
  * init the environment.
  */
 function init() {
+  setInitStatus();
+  randomCardId();
   var container = document.querySelector('.ip-slideshow');
   canvas = document.createElement('canvas');
   canvas.width = innerWidth;
@@ -151,7 +160,8 @@ function updataTransition() {
     case 0: //show the numbers
       [].forEach.call(particles, function (particle, index) {
         var i = Math.floor(3 * index / mainNum);
-        var newIndex = Math.floor(index - i * partNum);
+        var newIndex = (index - Math.floor(i * partNum));
+        newIndex %= Math.floor(partNum);
         switch (randomNum[i]) {
           case 0: //number 0
             var step = Math.PI * 2 * reOrder[newIndex] / partNum;
@@ -273,16 +283,18 @@ function updataTransition() {
         shape.y *= 0.6;
         shape.y += 144;
         shape.x += (i - 1) * gap;
-        particle.x += ((shape.x + Math.cos(particle.angle) * 5) - particle.x) * 0.08;
-        particle.y += ((shape.y + Math.sin(particle.angle) * 5) - particle.y) * 0.08;
+        particle.x += ((shape.x + Math.cos(particle.angle) * 5) - particle.x) * 0.16;
+        particle.y += ((shape.y + Math.sin(particle.angle) * 5) - particle.y) * 0.16;
         particle.angle += 0.08;
       });
       break;
     default:
       [].forEach.call(particles, function (particle, index) {
-        particle.x += (next[currentLayout - 1][index].x - particle.x) * 0.08;
-        particle.y += (next[currentLayout - 1][index].y - particle.y) * 0.08;
-        particle.angle += 0.08;
+        if (particle.hasOwnProperty('x')) {
+          particle.x += (next[currentLayout - 1][reOrder[index]].x + Math.cos(particle.angle) * 5 - particle.x) * 0.08;
+          particle.y += (next[currentLayout - 1][reOrder[index]].y + Math.sin(particle.angle) * 5 - particle.y) * 0.08;
+          particle.angle += 0.08;
+        }
       });
       break;
   }
@@ -298,11 +310,22 @@ function update() {
     if (particle.hasBorn) {
       particle.radius += (0 - particle.radius) * particle.bornSpeed;
       if (Math.round(particle.radius) === 0) {
-        //var i = Math.floor(3 * index / mainNum);
-        if (currentLayout == 0) {
-          //particle.color = colors[randomNum[i]][Math.floor(Math.random() * colors[currentLayout].length)];
-        } else {
-          //particle.color = colors[currentLayout + 9][Math.floor(Math.random() * colors[currentLayout].length)];
+        switch(currentLayout) {
+          case 0:
+            var i = Math.floor(3 * index / mainNum);
+            if (i == 1) {
+              particle.color = colors[1][Math.floor(Math.random() * colors[1].length)];
+            } else {
+              particle.color = colors[2][Math.floor(Math.random() * colors[0].length)];
+            }
+            break;
+          case 1:
+          case 2:
+            particle.color = colors[0][Math.floor(Math.random() * colors[0].length)];
+            break;
+          case 3:
+            particle.color = colors[3][Math.floor(Math.random() * colors[0].length)];
+            break;
         }
         particle.hasBorn = false;
       }
@@ -325,7 +348,14 @@ function clear() {
  * get a random number between min and max.
  */
 function randomBetween(min, max) {
-  return Math.floor((Math.random() * (max - min + 1) + min));
+  var res = Math.floor((Math.random() * (max - min + 1) + min));
+  if (res == max) {
+    var res = Math.floor((Math.random() * (max - min + 1) + min));
+    if (res == max) {
+      res -= 1;
+    }
+  }
+  return res;
 }
 
 function max(num1, num2) {
@@ -359,10 +389,12 @@ window.onload = init;
 function changeStatus(toLayout) {
   toLayout %= 4;
   if (toLayout == 2 && currentLayout != 2) {
+    randomOrder(reOrder, 0, next[1].length);
     for (var i = 0; i < (next[2].length - next[1].length); i++) {
       particles.pop();
     }
   } else if (currentLayout == 2 && toLayout != 2) {
+    randomOrder(reOrder, 0, mainNum);
     for (var i = 0; i < (next[2].length - next[1].length); i++) {
       var x, y;
       x = canvas.width * 0.5;
@@ -384,6 +416,11 @@ function changeStatus(toLayout) {
         angle: 0
       });
     }
+  } else {
+    randomOrder(reOrder, 0, mainNum);
+  }
+  if (toLayout == 0) {
+    showNum();
   }
   currentLayout = toLayout;
 }
@@ -399,4 +436,162 @@ function randomOrder(array, a, n) {
     array[index] = array[i - 1];
     array[i - 1] = temp;
   }
+}
+
+function showNum() {
+  if (currentLayout != 0) return;
+  for (var i = 0; i < 2; i++) {
+    randomOrder(reOrder, Math.floor(i * partNum), Math.floor((i + 1) * partNum));
+  }
+  randomOrder(reOrder, Math.floor(2 * partNum), mainNum);
+  randomNumberArray();
+}
+
+function randomNumberArray() {
+  randomNum[0] = randomBetween(0, maxHundredNum);
+  randomNum[1] = randomBetween(0, 10);
+  if (randomNum[1] == randomNum[0]) {
+    randomNum[1] = randomBetween(0, 10);
+  }
+  randomNum[2] = randomBetween(0, 10);
+  if (randomNum[2] == randomNum[1] || randomNum[2] == randomNum[0]) {
+    randomNum[2] = randomBetween(0, 10);
+  }
+}
+
+var isCardShow = [false, false, false, false, false, false, false, false];
+var showCardId = [2, 3, 4, 5, 6, 7, 8, 9];
+
+function hasClassName(inElement, inClassName) {
+  var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)');
+  return regExp.test(inElement.className);
+}
+
+function addClassName(inElement, inClassName) {
+  if (!hasClassName(inElement, inClassName)) {
+    inElement.className = [inElement.className, inClassName].join(' ');
+  }
+}
+
+function removeClassName(inElement, inClassName) {
+  if (hasClassName(inElement, inClassName)) {
+    var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)', 'g');
+    var curClasses = inElement.className;
+    inElement.className = curClasses.replace(regExp, ' ');
+  }
+}
+
+function moveToPosition() {
+  for (var i = 0; i < 8; i++) {
+    var e = document.getElementById("card" + i);
+    removeClassName(e, "card-over");
+    removeClassName(e, "to-center-card" + i);
+    addClassName(e, "to-position-card" + i);
+    removeClassName(e, "card-pic-center");
+    addClassName(e, "position-card" + i);
+  }
+  setTimeout(function() {
+    for (var i = 0; i < 8; i++) {
+      var e = document.getElementById("card" + i);
+      removeClassName(e, "to-position-card" + i);
+    }
+  }, 2010);
+  setTimeout(function() {
+    cardOverInOrder(0, 0);
+  }, 1900);
+}
+
+function cardOverInOrder(index, status) {
+  if (index < 8) {
+    cardOver(index, status);
+    setTimeout(function() {
+      cardOverInOrder(index + 1, status);
+    }, 50);
+    setTimeout(function() {
+      var e = document.getElementById("card" + index);
+      removeClassName(e, "card-over");
+    }, 1050);
+  }
+}
+
+function cardOver(index, status) {
+  var element = document.getElementById("card" + index);
+  removeClassName(element, "to-center-card" + index);
+  removeClassName(element, "to-position-card" + index);
+  addClassName(element, "card-over");
+  setTimeout(function() {
+    if (status == 0) {
+      if (isCardShow[index]) {
+        element.src = "../images/" + showCardId[index] + ".png";
+      } else {
+        element.src = "../images/card-word" + index + ".png";
+      }
+    } else if (status == 1) {
+      element.src = "../images/card.png";
+    } else if (status == 2) {
+      isCardShow[index] = true;
+      element.src = "../images/" + showCardId[index] + ".png";
+      setTimeout(function() {
+        var e = document.getElementById("card" + index);
+        removeClassName(e, "card-over");
+      }, 1050);
+    } else {
+      element.src = "../images/1.png";
+    }
+  }, 500);
+}
+
+function moveToCenter() {
+  cardOverInOrder(0, 1);
+  setTimeout(function() {
+    for (var i = 0; i < 8; i++) {
+      var e = document.getElementById("card" + i);
+      removeClassName(e, "card-over");
+      removeClassName(e, "to-position-card" + i);
+      addClassName(e, "to-center-card" + i);
+      removeClassName(e, "position-card" + i);
+      addClassName(e, "card-pic-center");
+    }
+    setTimeout(function() {
+      for (var i = 0; i < 8; i++) {
+        var e = document.getElementById("card" + i);
+        removeClassName(e, "to-center-card" + i);
+      }
+    }, 1510);
+  }, 1400);
+}
+
+function finalOver() {
+  for (var i = 0; i < 7; i++) {
+    var e = document.getElementById("card" + i);
+    addClassName(e, "hide");
+  }
+  cardOver(7, 3);
+  setTimeout(function() {
+    var e = document.getElementById("card7");
+    removeClassName(e, "card-over");
+  }, 1050);
+}
+
+function finalBack() {
+  cardOver(7, 1);
+  setTimeout(function() {
+    var e = document.getElementById("card7");
+    removeClassName(e, "card-over");
+    for (var i = 0; i < 7; i++) {
+      e = document.getElementById("card" + i);
+      removeClassName(e, "hide");
+    }
+  }, 1050);
+}
+
+function randomCardId() {
+  var temp = 0;
+  for (var i = 7; i >= 0; i--) {
+    var index = randomBetween(0, i + 1);
+    temp = showCardId[i];
+    showCardId[i] = showCardId[index];
+    showCardId[index] = temp;
+  }
+  console.log(showCardId);
 }

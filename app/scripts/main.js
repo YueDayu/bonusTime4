@@ -1,84 +1,3 @@
-console.log('\'Allo \'Allo!');
-
-function hasClassName(inElement, inClassName)
-{
-  var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)');
-  return regExp.test(inElement.className);
-}
-
-function addClassName(inElement, inClassName)
-{
-  if (!hasClassName(inElement, inClassName)) {
-    inElement.className = [inElement.className, inClassName].join(' ');
-  }
-}
-
-function removeClassName(inElement, inClassName)
-{
-  if (hasClassName(inElement, inClassName)) {
-    var regExp = new RegExp('(?:^|\\s+)' + inClassName + '(?:\\s+|$)', 'g');
-    var curClasses = inElement.className;
-    inElement.className = curClasses.replace(regExp, ' ');
-  }
-}
-
-function moveToPosition() {
-  for (var i = 0; i < 8; i++) {
-    var e = document.getElementById("card" + i);
-    removeClassName(e, "card-over");
-    removeClassName(e, "to-center-card" + i);
-    addClassName(e, "to-position-card" + i);
-    removeClassName(e, "card-pic-center");
-    addClassName(e, "position-card" + i);
-  }
-  setTimeout(function() {
-    cardOverInOrder(0, 0);
-  }, 1900);
-}
-
-function cardOverInOrder(index, status) {
-  if (index < 8) {
-    cardOver(index, status);
-    setTimeout(function() {
-      cardOverInOrder(index + 1, status);
-    }, 50);
-    setTimeout(function() {
-      var e = document.getElementById("card" + index);
-      removeClassName(e, "card-over");
-    }, 1100);
-  }
-}
-
-function cardOver(index, status) {
-  var element = document.getElementById("card" + index);
-  removeClassName(element, "to-center-card" + index);
-  removeClassName(element, "to-position-card" + index);
-  addClassName(element, "card-over");
-  setTimeout(function() {
-    if (status == 0) {
-      element.src = "../images/card-word" + index + ".png";
-    } else if (status == 1) {
-      element.src = "../images/card.png";
-    } else {
-      //TODO
-    }
-  }, 500);
-}
-
-function moveToCenter() {
-  cardOverInOrder(0, 1);
-  setTimeout(function() {
-    for (var i = 0; i < 8; i++) {
-      var e = document.getElementById("card" + i);
-      removeClassName(e, "card-over");
-      removeClassName(e, "to-position-card" + i);
-      addClassName(e, "to-center-card" + i);
-      removeClassName(e, "position-card" + i);
-      addClassName(e, "card-pic-center");
-    }
-  }, 1400);
-}
-
 function checkout() {
   var e = document.getElementById("card0");
   if (hasClassName(e, "position-card0")) {
@@ -86,5 +5,140 @@ function checkout() {
   } else {
     moveToPosition();
   }
+  //showNum();
+  //changeStatus(currentLayout + 1);
+}
+
+var test = 0;
+function checkout2() {
+  finalBack();
+}
+
+function checkout3() {
+  showNum();
+  finalOver();
+}
+
+function checkout4() {
   changeStatus(currentLayout + 1);
 }
+
+var status = 0;
+var actionLoop;
+var layout = 1;
+var isNumRun = false;
+
+var table = [81, 87, 69, 82, 65, 83, 68, 70];
+
+function switchBetweenWords() {
+  layout = 3 - layout;
+  changeStatus(layout);
+}
+
+function setInitStatus() {
+  clearInterval(actionLoop);
+  changeStatus(layout);
+  actionLoop = setInterval("switchBetweenWords()", 2000);
+}
+
+function changeNum() {
+  clearInterval(actionLoop);
+  changeStatus(0);
+  showNum();
+  isNumRun = true;
+  actionLoop = setInterval("showNum()", 200);
+}
+
+function stopNum() {
+  isNumRun = false;
+  clearInterval(actionLoop);
+}
+
+function openCards() {
+  changeStatus(3);
+  moveToPosition();
+}
+
+function seclectCard(index) {
+  cardOver(index, 2);
+}
+
+function selectToOrigin() {
+  moveToCenter();
+  setTimeout(function() {
+    setInitStatus();
+  }, 2500);
+  //setInitStatus();
+}
+
+function mainCardOver() {
+  finalOver();
+  $("#show").hide();
+}
+
+function mainToOrigin() {
+  finalBack();
+  setInitStatus();
+  setTimeout(function() {
+    $("#show").show();
+  }, 500);
+}
+
+function getPosition(num) {
+  for (var i = 0; i < 8; i++) {
+    if (table[i] == num) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+function isIntable(num) {
+  for (var i = 0; i < 8; i++) {
+    if (table[i] == num) {
+      return true;
+    }
+  }
+  return false;
+}
+
+$("body").keydown(function(event){
+  var key = event.which;
+  console.log(key);
+  console.log(status);
+  if (status == 0) {
+    if (key == 13) {
+      changeNum();
+      status = 1;
+    }
+  } else if (status == 1) {
+    if (key == 13) {
+      if (isNumRun) {
+        stopNum();
+      } else {
+        changeNum();
+      }
+    }
+    if (!isNumRun) {
+      if (key == 81) {
+        openCards();
+        status = 2;
+      } else if (key == 32) {
+        mainCardOver();
+        status = 3;
+      }
+    }
+  } else if (status == 2) {
+    if (isIntable(key)) {
+      seclectCard(getPosition(key));
+    } else if (key == 32) {
+      selectToOrigin();
+      status = 0;
+    }
+  } else if (status == 3) {
+    if (key == 32) {
+      mainToOrigin();
+      status = 0;
+    }
+  }
+});
