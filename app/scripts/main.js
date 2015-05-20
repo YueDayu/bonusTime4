@@ -129,7 +129,7 @@ $("body").keydown(function(event){
       }
     }
   } else if (status == 2) {
-    if (isIntable(key)) {
+    if (isIntable(key) && isCardShow[getPosition(key)] == false) {
       seclectCard(getPosition(key));
     } else if (key == 32) {
       selectToOrigin();
